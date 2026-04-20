@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Power Switch</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Raleway:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --g1: #0a2e0d;
+    --g2: #0d3d10;
+    --g3: #124a16;
+    --g4: #1a6b20;
+    --g5: #2d9e35;
+    --g6: #3dcc47;
+    --accent: #7fff87;
+    --glow: rgba(61, 204, 71, 0.6);
+    --off-track: #1c3a1e;
+    --off-thumb: #2a5c2e;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    font-family: 'Raleway', sans-serif;
+    overflow: hidden;
+  }
+
+  body {
+    background: radial-gradient(ellipse at 30% 20%, #1a5c1f 0%, #0a2e0d 40%),
+                radial-gradient(ellipse at 70% 80%, #154d19 0%, #061a08 50%),
+                #071509;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+    position: relative;
+  }
+
+  /* ── Animated background leaves ── */
+  .bg-canvas {
+    position: fixed; inset: 0; pointer-events: none; overflow: hidden;
+  }
+  .leaf {
+    position: absolute; border-radius: 50% 0 50% 0;
+    opacity: 0.07;
+    animation: floatLeaf linear infinite;
+    transform-origin: center;
+  }
+  @keyframes floatLeaf {
+    0%   { transform: translateY(110vh) rotate(0deg) scale(0.8); opacity: 0; }
+    10%  { opacity: 0.12; }
+    90%  { opacity: 0.06; }
+    100% { transform: translateY(-20vh) rotate(720deg) scale(1.1); opacity: 0; }
+  }
+
+  /* ── Light rays ── */
+  .rays {
+    position: fixed; inset: 0; pointer-events: none;
+    background: conic-gradient(from 200deg at 20% -10%,
+      transparent 0deg, rgba(45,158,53,0.04) 8deg, transparent 16deg,
+      transparent 32deg, rgba(45,158,53,0.03) 40deg, transparent 48deg,
+      transparent 64deg, rgba(45,158,53,0.05) 72deg, transparent 80deg
+    );
+    animation: rayRotate 40s linear infinite;
+  }
+  @keyframes rayRotate {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ── Firefly particles ── */
+  .firefly {
+    position: fixed; width: 4px; height: 4px;
+    border-radius: 50%; pointer-events: none;
+    background: var(--accent);
+    animation: fireflyMove linear infinite;
+  }
+  @keyframes fireflyMove {
+    0%, 100% { opacity: 0; transform: translate(0, 0); }
+    20% { opacity: 0.9; }
+    50% { opacity: 0.5; }
+    80% { opacity: 0.8; }
+  }
+
+  /* ── Card ── */
+  .card {
+    position: relative; z-index: 10;
+    background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+    border: 1px solid rgba(61,204,71,0.15);
+    border-radius: 32px;
+    padding: 3rem 4rem;
+    text-align: center;
+    backdrop-filter: blur(20px);
+    box-shadow:
+      0 0 0 1px rgba(61,204,71,0.08),
+      0 24px 80px rgba(0,0,0,0.5),
+      inset 0 1px 0 rgba(255,255,255,0.06);
+    transition: box-shadow 0.6s ease;
+  }
+  .card.on {
+    box-shadow:
+      0 0 0 1px rgba(61,204,71,0.25),
+      0 24px 80px rgba(0,0,0,0.5),
+      0 0 60px rgba(61,204,71,0.15),
+      0 0 120px rgba(61,204,71,0.08),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+
+  .label-top {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
+    letter-spacing: 0.25em;
+    color: rgba(125,220,130,0.4);
+    text-transform: uppercase;
+    margin-bottom: 2.5rem;
+    transition: color 0.6s ease;
+  }
+  .card.on .label-top { color: rgba(125,220,130,0.75); }
+
+  /* ── Switch wrapper ── */
+  .switch-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin: 0.5rem 0 2rem;
+  }
+
+  /* Outer halo ring */
+  .halo {
+    position: absolute;
+    width: 140px; height: 80px;
+    border-radius: 40px;
+    border: 2px solid transparent;
+    transition: border-color 0.4s, box-shadow 0.4s;
+  }
+  .switch-wrap:hover .halo {
+    border-color: rgba(61,204,71,0.2);
+    box-shadow: 0 0 20px rgba(61,204,71,0.12);
+  }
+  .halo.pulse {
+    border-color: rgba(61,204,71,0.6);
+    animation: haloPulse 1.2s ease-out forwards;
+  }
+  @keyframes haloPulse {
+    0%   { transform: scale(1);   opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+  }
+
+  /* Track */
+  .track {
+    position: relative;
+    width: 110px; height: 58px;
+    border-radius: 29px;
+    background: var(--off-track);
+    border: 2px solid rgba(61,204,71,0.12);
+    transition: background 0.5s cubic-bezier(0.4,0,0.2,1), border-color 0.5s, box-shadow 0.5s;
+    overflow: hidden;
+  }
+  .track.on {
+    background: linear-gradient(135deg, #1a6b20, #2d9e35);
+    border-color: rgba(61,204,71,0.5);
+    box-shadow:
+      0 0 20px rgba(61,204,71,0.3),
+      inset 0 0 20px rgba(61,204,71,0.1);
+  }
+
+  /* Track shine overlay */
+  .track::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 60%);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  /* Ripple inside track on click */
+  .track-ripple {
+    position: absolute; top: 50%; left: 50%;
+    width: 0; height: 0;
+    background: rgba(125,255,135,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .track-ripple.animate {
+    animation: trackRipple 0.5s ease-out forwards;
+  }
+  @keyframes trackRipple {
+    to { width: 120px; height: 120px; opacity: 0; }
+  }
+
+  /* Thumb */
+  .thumb {
+    position: absolute;
+    top: 5px; left: 5px;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #3a5e3c, #2a4a2c);
+    box-shadow:
+      0 2px 8px rgba(0,0,0,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.12);
+    transition:
+      transform 0.45s cubic-bezier(0.34,1.56,0.64,1),
+      background 0.45s ease,
+      box-shadow 0.45s ease;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .track.on .thumb {
+    transform: translateX(52px);
+    background: linear-gradient(145deg, #6adf72, #3dcc47);
+    box-shadow:
+      0 2px 12px rgba(61,204,71,0.5),
+      0 0 20px rgba(61,204,71,0.3),
+      inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+
+  /* Power icon on thumb */
+  .thumb svg {
+    width: 20px; height: 20px;
+    transition: opacity 0.3s, filter 0.4s;
+    opacity: 0.4;
+    filter: none;
+  }
+  .track.on .thumb svg {
+    opacity: 1;
+    filter: drop-shadow(0 0 4px rgba(255,255,255,0.8));
+  }
+
+  /* ── Status text ── */
+  .status {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(0.9rem, 3vw, 1.1rem);
+    letter-spacing: 0.3em;
+    color: rgba(125,220,130,0.3);
+    text-transform: uppercase;
+    transition: color 0.5s ease, text-shadow 0.5s ease;
+    min-height: 1.6em;
+  }
+  .card.on .status {
+    color: var(--accent);
+    text-shadow: 0 0 12px rgba(125,255,135,0.5), 0 0 30px rgba(61,204,71,0.3);
+  }
+
+  /* ── Energy bar ── */
+  .energy-bar {
+    margin-top: 2rem;
+    width: 100%;
+    height: 3px;
+    background: rgba(61,204,71,0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .card.on .energy-bar { opacity: 1; }
+  .energy-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, #2d9e35, var(--accent));
+    border-radius: 2px;
+    transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 0 8px var(--accent);
+  }
+  .card.on .energy-fill { width: 100%; }
+
+  /* ── Floating sparks ── */
+  .spark {
+    position: fixed; width: 6px; height: 6px;
+    border-radius: 50%; pointer-events: none; z-index: 5;
+    background: var(--accent);
+    animation: sparkFly 1s ease-out forwards;
+  }
+  @keyframes sparkFly {
+    0%   { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: var(--spark-end) scale(0); opacity: 0; }
+  }
+
+  /* ── Ground glow ── */
+  .ground-glow {
+    position: fixed; bottom: -100px; left: 50%;
+    transform: translateX(-50%);
+    width: 60vw; height: 200px;
+    background: radial-gradient(ellipse, rgba(45,158,53,0.15) 0%, transparent 70%);
+    pointer-events: none; z-index: 1;
+    transition: opacity 0.6s;
+    opacity: 0;
+  }
+  body.powered .ground-glow { opacity: 1; }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .card { padding: 2.5rem 2.5rem; border-radius: 24px; }
+    .track { width: 90px; height: 48px; border-radius: 24px; }
+    .thumb { width: 36px; height: 36px; }
+    .track.on .thumb { transform: translateX(42px); }
+    .halo { width: 120px; height: 70px; }
+    .thumb svg { width: 16px; height: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="rays"></div>
+<div class="bg-canvas" id="bgCanvas"></div>
+<div class="ground-glow"></div>
+
+<div class="card" id="card">
+  <div class="label-top">Power Control</div>
+
+  <div class="switch-wrap" id="switchWrap" onclick="toggle(event)" role="switch" aria-checked="false" tabindex="0">
+    <div class="halo" id="halo"></div>
+    <div class="track" id="track">
+      <div class="track-ripple" id="ripple"></div>
+      <div class="thumb">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3V12" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M7.05 5.05A8 8 0 1 0 16.95 5.05" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="status" id="statusText">Standby</div>
+  <div class="energy-bar"><div class="energy-fill"></div></div>
+</div>
+
+<script>
+let isOn = false;
+
+/* ── Build background leaves ── */
+const bgCanvas = document.getElementById('bgCanvas');
+const leafColors = ['#1a6b20','#2d9e35','#3dcc47','#0d3d10','#124a16'];
+for (let i = 0; i < 18; i++) {
+  const l = document.createElement('div');
+  l.className = 'leaf';
+  const sz = 20 + Math.random() * 60;
+  l.style.cssText = `
+    width:${sz}px; height:${sz*0.6}px;
+    background:${leafColors[Math.floor(Math.random()*leafColors.length)]};
+    left:${Math.random()*100}%;
+    animation-duration:${14+Math.random()*20}s;
+    animation-delay:${-Math.random()*20}s;
+    border-radius:${Math.random()>0.5?'50% 0 50% 0':'0 50% 0 50%'};
+  `;
+  bgCanvas.appendChild(l);
+}
+
+/* ── Fireflies ── */
+for (let i = 0; i < 12; i++) {
+  const ff = document.createElement('div');
+  ff.className = 'firefly';
+  const x = Math.random()*100, y = Math.random()*100;
+  const dx = (Math.random()-0.5)*30, dy = (Math.random()-0.5)*30;
+  ff.style.cssText = `
+    left:${x}vw; top:${y}vh;
+    animation-duration:${4+Math.random()*6}s;
+    animation-delay:${-Math.random()*8}s;
+    box-shadow:0 0 6px 2px rgba(125,255,135,0.4);
+    --dx:${dx}vw; --dy:${dy}vh;
+  `;
+  ff.style.setProperty('--dx', `${dx}vw`);
+  ff.style.setProperty('--dy', `${dy}vh`);
+  document.body.appendChild(ff);
+}
+
+/* ── Spark burst ── */
+function burstSparks(cx, cy) {
+  for (let i = 0; i < 12; i++) {
+    const s = document.createElement('div');
+    s.className = 'spark';
+    const angle = (i/12)*360;
+    const dist = 40 + Math.random()*60;
+    const rad = angle * Math.PI/180;
+    const ex = Math.cos(rad)*dist, ey = Math.sin(rad)*dist;
+    s.style.cssText = `left:${cx}px;top:${cy}px;
+      --spark-end:translate(${ex}px,${ey}px);
+      animation-duration:${0.5+Math.random()*0.5}s;
+      animation-delay:${Math.random()*0.1}s;
+      background:${Math.random()>0.5?'#7fff87':'#3dcc47'};
+    `;
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 1200);
+  }
+}
+
+/* ── Toggle (one-way: ON only) ── */
+function toggle(e) {
+  if (isOn) return;
+  isOn = true;
+
+  const card = document.getElementById('card');
+  const track = document.getElementById('track');
+  const halo = document.getElementById('halo');
+  const ripple = document.getElementById('ripple');
+  const status = document.getElementById('statusText');
+  const wrap = document.getElementById('switchWrap');
+
+  track.classList.add('on');
+  card.classList.add('on');
+  document.body.classList.add('powered');
+  wrap.setAttribute('aria-checked', 'true');
+  wrap.style.cursor = 'default';
+
+  /* Halo pulse */
+  halo.classList.remove('pulse');
+  void halo.offsetWidth;
+  halo.classList.add('pulse');
+  setTimeout(() => halo.classList.remove('pulse'), 1200);
+
+  /* Track ripple */
+  ripple.classList.remove('animate');
+  void ripple.offsetWidth;
+  ripple.classList.add('animate');
+
+  /* Sparks from switch center */
+  const rect = track.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  burstSparks(cx, cy);
+
+  /* Status text */
+  status.textContent = '';
+  setTimeout(() => { status.textContent = 'Active'; }, 150);
+}
+
+/* Keyboard support */
+document.getElementById('switchWrap').addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && !isOn) { e.preventDefault(); toggle(e); }
+});
+</script>
+</body>
+</html>
