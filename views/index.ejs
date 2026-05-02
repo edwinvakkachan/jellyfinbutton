@@ -3,23 +3,62 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Control Panel</title>
-<link rel="stylesheet" href="/css/index.css">
-
+  <title>Jellyfin Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/index.css">
 </head>
 <body>
 
-  <div class="container">
-    <h1>🎬 Media Control</h1>
-<div id="toast" class="toast" ></div>
-    <button class="btn" onclick="triggerWebhook()" >
-      Turn ON Device
-    </button>
+  <!-- Ambient background layers -->
+  <div class="bg-orb bg-orb--1"></div>
+  <div class="bg-orb bg-orb--2"></div>
+  <div class="grain"></div>
 
-    <div class="status" id="status"></div>
-  </div>
+  <div id="toast" class="toast"></div>
 
-<script src="/js/index.js"></script>
+  <main class="panel">
 
+    <!-- Header -->
+    <header class="panel__header">
+      <div class="jf-logo">
+        <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M50 5 L90 27.5 L90 72.5 L50 95 L10 72.5 L10 27.5 Z" fill="none" stroke="#AA5CC3" stroke-width="5"/>
+          <path d="M50 20 L75 34 L75 63 L50 77 L25 63 L25 34 Z" fill="#AA5CC3" opacity="0.15"/>
+          <path d="M42 35 L42 58 Q42 66 50 66 Q58 66 58 58 L58 55" stroke="#AA5CC3" stroke-width="6" stroke-linecap="round" fill="none"/>
+        </svg>
+      </div>
+      <div class="panel__title-block">
+        <h1 class="panel__title">Jellyfin</h1>
+        <span class="panel__subtitle">Media Server Control</span>
+      </div>
+    </header>
+
+    <!-- Power Button -->
+    <div class="power-wrap">
+      <div class="ring ring--outer"></div>
+      <div class="ring ring--mid"></div>
+      <button class="btn" onclick="triggerWebhook()" aria-label="Turn on Jellyfin device">
+        <span class="btn__icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
+            <line x1="12" y1="2" x2="12" y2="12"/>
+          </svg>
+        </span>
+        <span class="btn__label">Turn ON Device</span>
+      </button>
+    </div>
+
+    <!-- Status -->
+    <div class="status-bar">
+      <div class="status-dot" id="status-dot"></div>
+      <div class="status" id="status">Checking…</div>
+    </div>
+
+  </main>
+
+  <script src="/js/index.js"></script>
+  <script src="/js/index.extra.js"></script>
 </body>
 </html>
