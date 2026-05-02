@@ -6,13 +6,16 @@ services:
     container_name: jellyfinbutton
     ports:
       - "${PORT}:${PORT}"
-    restart: "no"
+    restart: "unless-stopped"
     environment:
       WEBHOOK_URL: ${WEBHOOK_URL}
       HA_URL: ${HA_URL}
       TOKEN: ${TOKEN}
       ENTITY_ID: ${ENTITY_ID}
       PORT: ${PORT}
+      JELLYFIN_URL: ${JELLYFIN_URL}
+      WEBHOOK_JELLYFINOff: ${WEBHOOK_JELLYFINOff}
+      API_KEY: ${API_KEY}
     dns:
       - 1.1.1.1
       - 1.0.0.1
