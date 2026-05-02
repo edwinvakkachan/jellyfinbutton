@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  radarr-cleaner:
+    build: .
+    container_name: jellyfinbutton
+    restart: no
+    environment:
+      API: ${API}
+      IP: ${IP}
+      WEBHOOK_URL: ${WEBHOOK_URL}
+      HA_URL: ${HA_URL}
+      TOKEN: ${TOKEN}
+      ENTITY_ID: ${ENTITY_ID}
+      PORT: ${PORT}
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
+
+
+
+
+
+
+
