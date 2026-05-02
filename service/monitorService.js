@@ -35,15 +35,14 @@ console.log(`Idle for ${idleMinutes.toFixed(1)} minutes`);
   if (idleMinutes >= 30) {
      try {
     await axios.post(config.WEBHOOK_JELLYFINOff, {
-      action: "turn_on"
+      action: "turn_off"
     });
 
-    res.send("✅ Device Turned ON");
+     console.log("Device turned off");
   } catch (error) {
     console.error(error.message);
-    res.status(500).send("❌ Failed to trigger");
+    console.log("❌ Failed to trigger webhook");
   }
-    console.log('device will turn off')
     lastActiveWatchTime = Date.now();
   }
 }

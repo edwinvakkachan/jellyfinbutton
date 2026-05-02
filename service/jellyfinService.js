@@ -22,7 +22,7 @@ try {
 
     if (!pi5On) {
       console.log("Pi5 is OFF — skipping Jellyfin monitor");
-      return;
+      return [];
     }
 
     console.log("Pi5 is ON — monitoring Jellyfin");
