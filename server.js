@@ -27,10 +27,12 @@ import router from './routes/userRoutes.js';
 app.use('/',router)
 
 
+import { monitorJellyfinUsage } from './service/monitorService.js';
 
 
 
 // Start server
 app.listen(config.PORT, () => {
   console.log(`🚀 Server running on http://localhost:${config.PORT}`);
+   setInterval(monitorJellyfinUsage, 60000);
 });

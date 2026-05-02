@@ -40,3 +40,5 @@ export const getStatus= async (req, res) => {
 export const getHome = async (req,res)=>{
     res.render('index')
 }
+
+
