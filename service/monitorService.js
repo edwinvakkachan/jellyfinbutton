@@ -8,7 +8,7 @@ export async function monitorJellyfinUsage() {
     console.log(`monitoring started`)
   const sessions = await getJellyfinSessions();
 
-for (const a of x) {
+for (const a of sessions) {
   console.log(
     `User: ${a.UserName}\n` +
     `Playing: ${a.NowPlayingItem?.Name || "Nothing"}\n` +
