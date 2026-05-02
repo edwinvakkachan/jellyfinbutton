@@ -68,23 +68,30 @@
     }
   }
 
-  async function getStatus() {
-    try {
-      const res = await fetch('/api/status');
-      const data = await res.json();
+let statusLoading = false;
 
-      if (data.state === "on") {
-        status.innerText = "🟢 Device is ON";
-      } else if (data.state === "off") {
-        status.innerText = "🔴 Device is OFF";
-      } else {
-        status.innerText = "⚪ Unknown";
-      }
+async function getStatus() {
+  if (statusLoading) return;
+  statusLoading = true;
 
-    } catch {
-      status.innerText = "Error fetching status";
+  try {
+    const res = await fetch('/api/status');
+    const data = await res.json();
+
+    if (data.state === "on") {
+      status.innerText = "🟢 Device is ON";
+    } else if (data.state === "off") {
+      status.innerText = "🔴 Device is OFF";
+    } else {
+      status.innerText = "⚪ Unknown";
     }
-  }
 
-  setInterval(getStatus, 5000);
+  } catch {
+    status.innerText = "Error fetching status";
+  } finally {
+    statusLoading = false;
+  }
+}
+
+setInterval(getStatus, 10000);
   getStatus();
