@@ -8,6 +8,8 @@ export async function monitorJellyfinUsage() {
     console.log(`monitoring started`)
   const sessions = await getJellyfinSessions();
 
+
+
 for (const a of sessions) {
   console.log(
     `User: ${a.UserName}\n` +
@@ -15,6 +17,7 @@ for (const a of sessions) {
     `Client: ${a.Client}\n`
   );
 }
+
   const activeWatching = sessions.filter(
     s => s.NowPlayingItem && !s.PlayState?.IsPaused
   );
