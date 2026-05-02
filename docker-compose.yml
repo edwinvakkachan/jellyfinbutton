@@ -4,7 +4,9 @@ services:
   jellyfinbutton:
     build: .
     container_name: jellyfinbutton
-    restart: no
+    ports:
+      - "${PORT}:${PORT}"
+    restart: "no"
     environment:
       WEBHOOK_URL: ${WEBHOOK_URL}
       HA_URL: ${HA_URL}
@@ -14,10 +16,3 @@ services:
     dns:
       - 1.1.1.1
       - 1.0.0.1
-
-
-
-
-
-
-
