@@ -19,3 +19,8 @@ export async function turnTheOnDevice(){
       action: "turn_on"
     });
 }
+export async function turnTheDeviceOFF() {
+  await axios.post(config.WEBHOOK_JELLYFINOff, {
+      action: "turn_off"
+    });
+}

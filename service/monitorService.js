@@ -2,7 +2,7 @@ import axios from "axios";
 import { getJellyfinSessions } from "./jellyfinService.js";
 import config from "../config/config.js";
 import { logCurrentDateTime } from "../utils/logCurrentDateTime.js";
-import { fetchPiStatus } from "./homeassistant.js";
+import { fetchPiStatus,turnTheDeviceOFF } from "./homeassistant.js";
 
 
 let lastActiveWatchTime = Date.now();
@@ -29,7 +29,8 @@ export async function monitorJellyfinUsage() {
     return;
   }
 
-  const sessions = await getJellyfinSessions();
+  const rawSessions = await getJellyfinSessions();
+const sessions = Array.isArray(rawSessions) ? rawSessions : [];
 
   for (const a of sessions) {
   console.log(
@@ -55,10 +56,7 @@ if(sessions.length==0){
 console.log(`Idle for ${idleMinutes.toFixed(1)} minutes`);
   if (idleMinutes >= 30) {
      try {
-    await axios.post(config.WEBHOOK_JELLYFINOff, {
-      action: "turn_off"
-    });
-
+   await turnTheDeviceOFF();
      console.log("Device turned off");
   } catch (error) {
     console.error(error.message);

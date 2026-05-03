@@ -2,6 +2,7 @@ export function logCurrentDateTime(message = "Current Time") {
   const now = new Date();
 
   const formatted = now.toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -12,5 +13,5 @@ export function logCurrentDateTime(message = "Current Time") {
     hour12: true,
   });
 
-  console.log(`🕒 ${message}: ${formatted}`);
+  console.log(`🕒 ${message}: ${formatted} IST`);
 }
