@@ -1,74 +1,88 @@
+const button = document.querySelector('.btn');
+const status = document.getElementById('status');
+const toast = document.getElementById('toast');
 
-  let cooldown = 180; // 3 minutes
-  let timerInterval = null;
-  let remaining = 0;
+let timerInterval = null;
+let remaining = 0;
+let statusLoading = false;
 
-  const button = document.querySelector('.btn');
-  const status = document.getElementById('status');
-  const toast = document.getElementById('toast');
+function formatTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
 
-  function formatTime(sec) {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  }
+function showToast(message) {
+  toast.innerText = message;
+  toast.classList.add("show");
 
-  function showToast(message) {
-    toast.innerText = message;
-    toast.classList.add("show");
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 3000);
+}
 
-    setTimeout(() => {
-      toast.classList.remove("show");
-    }, 3000);
-  }
+function startCooldownUI(seconds) {
+  clearInterval(timerInterval);
 
-  function startCooldown() {
-    button.disabled = true;
-    button.style.opacity = "0.6";
-    button.innerText = "Please wait...";
+  remaining = seconds;
+  button.disabled = true;
+  button.style.opacity = "0.6";
 
-    remaining = cooldown;
+  timerInterval = setInterval(() => {
+    status.innerText = `⏳ Wait ${formatTime(remaining)}`;
+    button.innerText = `Wait ${formatTime(remaining)}`;
 
-    timerInterval = setInterval(() => {
-      remaining--;
+    remaining--;
 
-      status.innerText = `⏳ Wait ${formatTime(remaining)}`;
+    if (remaining < 0) {
+      clearInterval(timerInterval);
 
-      if (remaining <= 0) {
-        clearInterval(timerInterval);
-        button.disabled = false;
-        button.style.opacity = "1";
-        button.innerText = "Turn ON Device";
-        status.innerText = "✅ Ready";
+      button.disabled = false;
+      button.style.opacity = "1";
+      button.innerText = "Turn ON Device";
+
+      getStatus();
+    }
+  }, 1000);
+}
+
+async function triggerWebhook() {
+  try {
+    const res = await fetch('/api/turn-on');
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (data.remaining) {
+        startCooldownUI(data.remaining);
+        showToast(`⏳ Wait ${formatTime(data.remaining)}`);
       }
-    }, 1000);
-  }
-
-  async function triggerWebhook() {
-    // 🚫 If disabled → show toast instead of alert
-    if (button.disabled) {
-      showToast(`⏳ Please wait ${formatTime(remaining)}`);
       return;
     }
 
-    status.innerText = "Sending request...";
+    showToast(data.message);
 
-    try {
-      const res = await fetch('/api/turn-on');
-      const text = await res.text();
-      status.innerText = text;
-
-      showToast("✅ Request sent successfully");
-      startCooldown();
+    if (data.success) {
+      getCooldown();
       getStatus();
-
-    } catch {
-      status.innerText = "Error";
-      showToast("❌ Failed to send request");
     }
-  }
 
-let statusLoading = false;
+  } catch {
+    showToast("❌ Request failed");
+  }
+}
+
+async function getCooldown() {
+  try {
+    const res = await fetch('/api/cooldown');
+    const data = await res.json();
+
+    if (data.active) {
+      startCooldownUI(data.remaining);
+    }
+  } catch (err) {
+    console.error("Cooldown fetch failed:", err);
+  }
+}
 
 async function getStatus() {
   if (statusLoading) return;
@@ -77,6 +91,8 @@ async function getStatus() {
   try {
     const res = await fetch('/api/status');
     const data = await res.json();
+
+    if (remaining > 0) return;
 
     if (data.state === "on") {
       status.innerText = "🟢 Device is ON";
@@ -93,5 +109,7 @@ async function getStatus() {
   }
 }
 
+getCooldown();
+getStatus();
+
 setInterval(getStatus, 10000);
-  getStatus();
