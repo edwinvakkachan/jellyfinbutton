@@ -4,6 +4,8 @@ services:
   jellyfinbutton:
     build: .
     container_name: jellyfinbutton
+    networks:
+      - bridge
     ports:
       - "${PORT}:${PORT}"
     restart: "unless-stopped"
@@ -19,3 +21,7 @@ services:
     dns:
       - 1.1.1.1
       - 1.0.0.1
+networks:
+  bridge:
+    external: true
+    name: bridge
