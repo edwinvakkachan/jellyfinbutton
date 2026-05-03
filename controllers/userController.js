@@ -1,6 +1,8 @@
 
 import axios  from "axios";
 import config from "../config/config.js";
+import { fetchPiStatus } from "../service/homeassistant.js";
+import { turnTheOnDevice } from "../service/homeassistant.js";
 // API: Turn ON
 
 let cooldownUntil = 0;
@@ -18,9 +20,7 @@ const now = Date.now();
     });
   }
 
-    await axios.post(config.WEBHOOK_URL, {
-      action: "turn_on"
-    });
+  await turnTheOnDevice()
 
 cooldownUntil = now + 180000; // 3 min
 
@@ -39,14 +39,7 @@ cooldownUntil = now + 180000; // 3 min
 // // API: Get status
 export const getStatus= async (req, res) => {
   try {
-    const response = await axios.get(
-      `${config.HA_URL}/api/states/${config.ENTITY_ID}`,
-      {
-        headers: {
-          Authorization: `Bearer ${config.TOKEN}`
-        }
-      }
-    );
+    const response = await fetchPiStatus();
 
     res.json({
       state: response.data.state

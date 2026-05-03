@@ -2,24 +2,20 @@ import axios from "axios";
 import { getJellyfinSessions } from "./jellyfinService.js";
 import config from "../config/config.js";
 import { logCurrentDateTime } from "../utils/logCurrentDateTime.js";
+import { fetchPiStatus } from "./homeassistant.js";
 
 
 let lastActiveWatchTime = Date.now();
 let previousPiState = "unknown";
 
-async function getPiStatus() {
-  try {
-    const res = await axios.get(`${config.JELLYFIN_URL}/api/status`);
-    return res.data.state;
-  } catch (err) {
-    console.error("Failed to get Pi status:", err.message);
-    return "unknown";
-  }
-}
+
 
 export async function monitorJellyfinUsage() {
    logCurrentDateTime("monitoring started")
-  const piState = await getPiStatus();
+  const responce = await fetchPiStatus();
+   const piState =  responce.data.state;
+ 
+  console.log(piState);
    // Detect OFF -> ON transition
   if (previousPiState === "off" && piState === "on") {
     console.log("Pi turned ON → Resetting idle timer");
