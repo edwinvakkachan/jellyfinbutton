@@ -5,9 +5,33 @@ import { logCurrentDateTime } from "../utils/logCurrentDateTime.js";
 
 
 let lastActiveWatchTime = Date.now();
+let previousPiState = "unknown";
+
+async function getPiStatus() {
+  try {
+    const res = await axios.get(`${config.JELLYFIN_URL}/api/status`);
+    return res.data.state;
+  } catch (err) {
+    console.error("Failed to get Pi status:", err.message);
+    return "unknown";
+  }
+}
 
 export async function monitorJellyfinUsage() {
    logCurrentDateTime("monitoring started")
+  const piState = await getPiStatus();
+   // Detect OFF -> ON transition
+  if (previousPiState === "off" && piState === "on") {
+    console.log("Pi turned ON → Resetting idle timer");
+    lastActiveWatchTime = Date.now();
+  }
+
+  previousPiState = piState;
+
+  if (piState !== "on") {
+    console.log("Pi is OFF — skipping monitor");
+    return;
+  }
 
   const sessions = await getJellyfinSessions();
 
