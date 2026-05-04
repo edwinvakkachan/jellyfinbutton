@@ -1,8 +1,8 @@
 import axios from "axios";
 import { getJellyfinSessions } from "./jellyfinService.js";
 import config from "../config/config.js";
-import { logCurrentDateTime } from "../utils/logCurrentDateTime.js";
 import { fetchPiStatus,turnTheDeviceOFF } from "./homeassistant.js";
+import {logTime} from "../utils/logCurrentDateTime.js"
 
 
 let lastActiveWatchTime = Date.now();
@@ -11,7 +11,7 @@ let previousPiState = "unknown";
 
 
 export async function monitorJellyfinUsage() {
-   logCurrentDateTime("monitoring started")
+  await logTime()
   const responce = await fetchPiStatus();
    const piState =  responce.data.state;
  

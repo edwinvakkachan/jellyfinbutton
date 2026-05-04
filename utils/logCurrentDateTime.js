@@ -1,17 +1,10 @@
-export function logCurrentDateTime(message = "Current Time") {
-  const now = new Date();
 
-  const formatted = now.toLocaleString("en-IN", {
-    timeZone: "Asia/Kolkata",
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
+
+
+export async function logTime(message='⌚') {
+  const time = new Date().toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour12: false
   });
-
-  console.log(`🕒 ${message}: ${formatted} IST`);
+  console.log( `Monitoring started ${time} `);
 }
