@@ -32,12 +32,14 @@ export async function monitorJellyfinUsage() {
   const rawSessions = await getJellyfinSessions();
 const sessions = Array.isArray(rawSessions) ? rawSessions : [];
 
+if(sessions.length>0){
   for (const a of sessions) {
   console.log(
     `User: ${a.UserName}\n` +
     `Playing: ${a.NowPlayingItem?.Name || "Nothing"}\n` +
     `Client: ${a.Client}\n`
   );
+}
 }
 if(sessions.length==0){
     console.log('No user is currently watching anything');
