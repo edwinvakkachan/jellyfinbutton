@@ -18,6 +18,10 @@ services:
       JELLYFIN_URL: ${JELLYFIN_URL}
       WEBHOOK_JELLYFINOff: ${WEBHOOK_JELLYFINOff}
       API_KEY: ${API_KEY}
+      QBITUSER: ${QBITUSER}
+      QBITPASS: ${QBITPASS}
+      QBITIP: ${QBITIP}
+
     dns:
       - 1.1.1.1
       - 1.0.0.1
