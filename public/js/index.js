@@ -24,6 +24,7 @@ function renderUiState(uiState) {
   button.disabled = uiState.buttonDisabled;
   buttonLabel.innerText = uiState.buttonLabel;
   document.body.classList.toggle("is-waiting", uiState.isWaiting);
+  document.body.classList.toggle("is-turning-on", uiState.isTurningOn);
   document.body.classList.toggle("is-turning-off", uiState.isTurningOff);
   document.body.classList.toggle("is-power-cut", uiState.isPowerCut);
   uptime.innerText = uiState.uptimeText || "";
@@ -34,6 +35,8 @@ function renderUiState(uiState) {
     statusDot.classList.add("is-on");
   } else if (uiState.statusKind === "off") {
     statusDot.classList.add("is-off");
+  } else if (uiState.statusKind === "turning-on") {
+    statusDot.classList.add("is-turning-on");
   } else if (uiState.statusKind === "turning-off") {
     statusDot.classList.add("is-turning-off");
   } else if (uiState.statusKind === "power-cut") {
@@ -58,7 +61,7 @@ async function getUiState() {
     scheduleStatusRefresh(uiState.nextPollMs);
   } catch {
     status.innerText = "Error fetching status";
-    document.body.classList.remove("is-waiting", "is-turning-off", "is-power-cut");
+    document.body.classList.remove("is-waiting", "is-turning-on", "is-turning-off", "is-power-cut");
     uptime.innerText = "";
     uptime.hidden = true;
     scheduleStatusRefresh();

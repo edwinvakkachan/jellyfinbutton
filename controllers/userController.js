@@ -78,6 +78,19 @@ async function getJellyfinHelperState() {
   return response?.data?.state || "unknown";
 }
 
+async function getDeviceAndHelperState() {
+  const [deviceResponse, helperState] = await Promise.all([
+    fetchPiStatus(),
+    getJellyfinHelperState()
+  ]);
+
+  return {
+    homeAssistantState: deviceResponse.data,
+    state: deviceResponse.data.state,
+    helperState
+  };
+}
+
 async function buildUiState() {
   const cooldown = getCooldownState();
 
@@ -91,6 +104,7 @@ async function buildUiState() {
       buttonLabel: "Power Cut",
       buttonDisabled: true,
       isWaiting: false,
+      isTurningOn: false,
       isTurningOff: false,
       isPowerCut: true,
       uptimeText: "Waiting for power to return",
@@ -101,39 +115,14 @@ async function buildUiState() {
     };
   }
 
-  if (cooldown.active) {
-    const waitText = `Wait ${formatTime(cooldown.remaining)}`;
-
-    return {
-      state: "cooldown",
-      statusText: waitText,
-      statusKind: "waiting",
-      buttonLabel: waitText,
-      buttonDisabled: true,
-      isWaiting: true,
-      isTurningOff: false,
-      isPowerCut: false,
-      uptimeText: null,
-      powerCutState,
-      cooldown,
-      nextPollMs: 1000
-    };
-  }
-
   try {
-    const [deviceResponse, helperResponse] = await Promise.all([
-      fetchPiStatus(),
-      getJellyfinHelperState()
-    ]);
-    const response = deviceResponse;
-    const homeAssistantState = response.data;
-    const state = homeAssistantState.state;
-    const helperState = helperResponse;
+    const { homeAssistantState, state, helperState } = await getDeviceAndHelperState();
     const baseState = {
       state,
       buttonLabel: "Turn ON Device",
       buttonDisabled: false,
       isWaiting: false,
+      isTurningOn: false,
       isTurningOff: false,
       isPowerCut: false,
       uptimeText: null,
@@ -167,6 +156,34 @@ async function buildUiState() {
     }
 
     if (state === "off") {
+      if (helperState === "on") {
+        return {
+          ...baseState,
+          statusText: "Device is turning ON",
+          statusKind: "turning-on",
+          buttonLabel: "Turning ON",
+          buttonDisabled: true,
+          isTurningOn: true,
+          uptimeText: "Waiting for device to start",
+          nextPollMs: 5000
+        };
+      }
+
+      if (cooldown.active) {
+        const waitText = `Wait ${formatTime(cooldown.remaining)}`;
+
+        return {
+          ...baseState,
+          state: "cooldown",
+          statusText: waitText,
+          statusKind: "waiting",
+          buttonLabel: waitText,
+          buttonDisabled: true,
+          isWaiting: true,
+          nextPollMs: 1000
+        };
+      }
+
       return {
         ...baseState,
         statusText: "Device is OFF",
@@ -189,6 +206,7 @@ async function buildUiState() {
       buttonLabel: "Turn ON Device",
       buttonDisabled: false,
       isWaiting: false,
+      isTurningOn: false,
       isTurningOff: false,
       isPowerCut: false,
       uptimeText: null,
@@ -209,10 +227,20 @@ export const turnOnDevice = async (req, res) => {
       });
     }
 
-    if (await getJellyfinHelperState() === "off") {
+    const { state, helperState } = await getDeviceAndHelperState();
+
+    if (state === "on" && helperState === "off") {
       return res.status(409).json({
         success: false,
         message: "Device is turning off",
+        uiState: await buildUiState()
+      });
+    }
+
+    if (state === "off" && helperState === "on") {
+      return res.status(409).json({
+        success: false,
+        message: "Device is already turning on",
         uiState: await buildUiState()
       });
     }
