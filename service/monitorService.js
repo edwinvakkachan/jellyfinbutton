@@ -3,7 +3,8 @@ import { getJellyfinSessions } from "./jellyfinService.js";
 import config from "../config/config.js";
 import { fetchPiStatus,turnTheDeviceOFF } from "./homeassistant.js";
 import {logTime} from "../utils/logCurrentDateTime.js"
-
+import { loginQB } from "./qb.js";
+import { getTorrents } from "./torrent.js";
 
 let lastActiveWatchTime = Date.now();
 let previousPiState = "unknown";
@@ -56,7 +57,14 @@ if(sessions.length==0){
 
   const idleMinutes = (Date.now() - lastActiveWatchTime) / 1000 / 60;
 console.log(`Idle for ${idleMinutes.toFixed(1)} minutes`);
-  if (idleMinutes >= 30) {
+ 
+
+
+
+await loginQB();
+let count = await getTorrents();
+console.log(`total torrent count is ${count}`)
+if (idleMinutes >= 30 && count < 5 ) {
      try {
    await turnTheDeviceOFF();
      console.log("Device turned off");
@@ -67,3 +75,4 @@ console.log(`Idle for ${idleMinutes.toFixed(1)} minutes`);
     lastActiveWatchTime = Date.now();
   }
 }
+monitorJellyfinUsage()

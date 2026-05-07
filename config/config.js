@@ -7,9 +7,12 @@ const config={
  HA_URL : process.env.HA_URL,
  TOKEN : process.env.TOKEN,
  ENTITY_ID : process.env.ENTITY_ID,
- WEBHOOK_JELLYFINOff:process.env.WEBHOOK_JELLYFINOff,
+ WEBHOOK_JELLYFINOff :process.env.WEBHOOK_JELLYFINOff,
  JELLYFIN_URL:process.env.JELLYFIN_URL,
- API_KEY :process.env.API_KEY
+ API_KEY :process.env.API_KEY,
+ QBITIP :process.env.QBITIP,
+ QBITPASS :process.env.QBITPASS,
+ QBITUSER :process.env.QBITUSER
 }
 
 export default config;
