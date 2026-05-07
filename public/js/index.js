@@ -1,16 +1,11 @@
-const button = document.querySelector('.btn');
-const status = document.getElementById('status');
-const toast = document.getElementById('toast');
+const button = document.querySelector(".btn");
+const buttonLabel = button?.querySelector(".btn__label");
+const status = document.getElementById("status");
+const statusDot = document.getElementById("status-dot");
+const toast = document.getElementById("toast");
 
-let timerInterval = null;
-let remaining = 0;
+let pollTimer = null;
 let statusLoading = false;
-
-function formatTime(sec) {
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
 
 function showToast(message) {
   toast.innerText = message;
@@ -21,95 +16,80 @@ function showToast(message) {
   }, 3000);
 }
 
-function startCooldownUI(seconds) {
-  clearInterval(timerInterval);
+function renderUiState(uiState) {
+  if (!uiState) return;
 
-  remaining = seconds;
-  button.disabled = true;
-  button.style.opacity = "0.6";
+  status.innerText = uiState.statusText;
+  button.disabled = uiState.buttonDisabled;
+  buttonLabel.innerText = uiState.buttonLabel;
+  document.body.classList.toggle("is-waiting", uiState.isWaiting);
 
-  timerInterval = setInterval(() => {
-    status.innerText = `⏳ Wait ${formatTime(remaining)}`;
-    button.innerText = `Wait ${formatTime(remaining)}`;
-
-    remaining--;
-
-    if (remaining < 0) {
-      clearInterval(timerInterval);
-
-      button.disabled = false;
-      button.style.opacity = "1";
-      button.innerText = "Turn ON Device";
-
-      getStatus();
-    }
-  }, 1000);
-}
-
-async function triggerWebhook() {
-  try {
-    const res = await fetch('/api/turn-on');
-    const data = await res.json();
-
-    if (!res.ok) {
-      if (data.remaining) {
-        startCooldownUI(data.remaining);
-        showToast(`⏳ Wait ${formatTime(data.remaining)}`);
-      }
-      return;
-    }
-
-    showToast(data.message);
-
-    if (data.success) {
-      getCooldown();
-      getStatus();
-    }
-
-  } catch {
-    showToast("❌ Request failed");
+  statusDot.className = "status-dot";
+  if (uiState.statusKind === "on") {
+    statusDot.classList.add("is-on");
+  } else if (uiState.statusKind === "off") {
+    statusDot.classList.add("is-off");
   }
 }
 
-async function getCooldown() {
-  try {
-    const res = await fetch('/api/cooldown');
-    const data = await res.json();
-
-    if (data.active) {
-      startCooldownUI(data.remaining);
-    }
-  } catch (err) {
-    console.error("Cooldown fetch failed:", err);
-  }
+function scheduleStatusRefresh(delayMs = 10000) {
+  clearTimeout(pollTimer);
+  pollTimer = setTimeout(getUiState, delayMs);
 }
 
-async function getStatus() {
+async function getUiState() {
   if (statusLoading) return;
   statusLoading = true;
 
   try {
-    const res = await fetch('/api/status');
-    const data = await res.json();
+    const res = await fetch("/api/ui-state");
+    const uiState = await res.json();
 
-    if (remaining > 0) return;
-
-    if (data.state === "on") {
-      status.innerText = "🟢 Device is ON";
-    } else if (data.state === "off") {
-      status.innerText = "🔴 Device is OFF";
-    } else {
-      status.innerText = "⚪ Unknown";
-    }
-
+    renderUiState(uiState);
+    scheduleStatusRefresh(uiState.nextPollMs);
   } catch {
     status.innerText = "Error fetching status";
+    scheduleStatusRefresh();
   } finally {
     statusLoading = false;
   }
 }
 
-getCooldown();
-getStatus();
+async function triggerWebhook() {
+  try {
+    const res = await fetch("/api/turn-on");
+    const data = await res.json();
 
-setInterval(getStatus, 10000);
+    showToast(data.message || "Request failed");
+
+    if (data.uiState) {
+      renderUiState(data.uiState);
+      scheduleStatusRefresh(data.uiState.nextPollMs);
+    }
+
+    if (!res.ok && !data.uiState) {
+      getUiState();
+    }
+  } catch {
+    showToast("Request failed");
+  }
+}
+
+button?.addEventListener("pointerdown", (event) => {
+  if (button.disabled) return;
+
+  const ripple = document.createElement("span");
+  const rect = button.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height) * 2;
+
+  ripple.className = "btn__ripple";
+  ripple.style.width = `${size}px`;
+  ripple.style.height = `${size}px`;
+  ripple.style.left = `${event.clientX - rect.left - size / 2}px`;
+  ripple.style.top = `${event.clientY - rect.top - size / 2}px`;
+
+  button.appendChild(ripple);
+  ripple.addEventListener("animationend", () => ripple.remove(), { once: true });
+});
+
+getUiState();

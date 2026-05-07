@@ -39,7 +39,7 @@
     <div class="power-wrap">
       <div class="ring ring--outer"></div>
       <div class="ring ring--mid"></div>
-      <button class="btn" onclick="triggerWebhook()" aria-label="Turn on Jellyfin device">
+      <button class="btn" type="button" onclick="triggerWebhook()" aria-label="Turn on Jellyfin device">
         <span class="btn__icon">
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
@@ -53,12 +53,11 @@
     <!-- Status -->
     <div class="status-bar">
       <div class="status-dot" id="status-dot"></div>
-      <div class="status" id="status">Checking…</div>
+      <div class="status" id="status">Checking...</div>
     </div>
 
   </main>
 
   <script src="/js/index.js"></script>
-  <script src="/js/index.extra.js"></script>
 </body>
 </html>
