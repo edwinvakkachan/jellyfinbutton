@@ -2,6 +2,7 @@ const button = document.querySelector(".btn");
 const buttonLabel = button?.querySelector(".btn__label");
 const status = document.getElementById("status");
 const statusDot = document.getElementById("status-dot");
+const uptime = document.getElementById("uptime");
 const toast = document.getElementById("toast");
 
 let pollTimer = null;
@@ -23,12 +24,20 @@ function renderUiState(uiState) {
   button.disabled = uiState.buttonDisabled;
   buttonLabel.innerText = uiState.buttonLabel;
   document.body.classList.toggle("is-waiting", uiState.isWaiting);
+  document.body.classList.toggle("is-turning-off", uiState.isTurningOff);
+  document.body.classList.toggle("is-power-cut", uiState.isPowerCut);
+  uptime.innerText = uiState.uptimeText || "";
+  uptime.hidden = !uiState.uptimeText;
 
   statusDot.className = "status-dot";
   if (uiState.statusKind === "on") {
     statusDot.classList.add("is-on");
   } else if (uiState.statusKind === "off") {
     statusDot.classList.add("is-off");
+  } else if (uiState.statusKind === "turning-off") {
+    statusDot.classList.add("is-turning-off");
+  } else if (uiState.statusKind === "power-cut") {
+    statusDot.classList.add("is-power-cut");
   }
 }
 
@@ -49,6 +58,9 @@ async function getUiState() {
     scheduleStatusRefresh(uiState.nextPollMs);
   } catch {
     status.innerText = "Error fetching status";
+    document.body.classList.remove("is-waiting", "is-turning-off", "is-power-cut");
+    uptime.innerText = "";
+    uptime.hidden = true;
     scheduleStatusRefresh();
   } finally {
     statusLoading = false;
