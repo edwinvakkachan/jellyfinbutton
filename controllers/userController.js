@@ -69,6 +69,15 @@ async function getPowerCutState() {
   return response?.data?.state || "unknown";
 }
 
+async function getJellyfinHelperState() {
+  const response = await fetchJellyfinHelperStatus().catch((err) => {
+    console.error(err.message);
+    return null;
+  });
+
+  return response?.data?.state || "unknown";
+}
+
 async function buildUiState() {
   const cooldown = getCooldownState();
 
@@ -114,15 +123,12 @@ async function buildUiState() {
   try {
     const [deviceResponse, helperResponse] = await Promise.all([
       fetchPiStatus(),
-      fetchJellyfinHelperStatus().catch((err) => {
-        console.error(err.message);
-        return null;
-      })
+      getJellyfinHelperState()
     ]);
     const response = deviceResponse;
     const homeAssistantState = response.data;
     const state = homeAssistantState.state;
-    const helperState = helperResponse?.data?.state || "unknown";
+    const helperState = helperResponse;
     const baseState = {
       state,
       buttonLabel: "Turn ON Device",
@@ -199,6 +205,14 @@ export const turnOnDevice = async (req, res) => {
       return res.status(409).json({
         success: false,
         message: "Power cut detected",
+        uiState: await buildUiState()
+      });
+    }
+
+    if (await getJellyfinHelperState() === "off") {
+      return res.status(409).json({
+        success: false,
+        message: "Device is turning off",
         uiState: await buildUiState()
       });
     }
