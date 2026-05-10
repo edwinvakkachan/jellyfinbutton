@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getJellyfinSessions } from "./jellyfinService.js";
 import config from "../config/config.js";
-import { fetchPiStatus,turnTheDeviceOFF } from "./homeassistant.js";
+import { fetchPiStatus,turnTheDeviceOFF,turnONRRRaps,turnOffRRRaps } from "./homeassistant.js";
 import {logTime} from "../utils/logCurrentDateTime.js"
 import { loginQB } from "./qb.js";
 import { getTorrents } from "./torrent.js";
@@ -50,10 +50,25 @@ if(sessions.length==0){
     s => s.NowPlayingItem && !s.PlayState?.IsPaused
   );
 
+console.log(`the current user count is ${activeWatching.length}`);
+
+if(activeWatching.length>=2){
+  console.log('rrr apps turn off');
+await turnOffRRRaps ();
+}
+
+
+
+
   if (activeWatching.length > 0) {
     lastActiveWatchTime = Date.now();
     return;
   }
+
+if(activeWatching.length<2){
+    console.log('rrr apps turn ON');
+  await turnONRRRaps();
+}
 
   const idleMinutes = (Date.now() - lastActiveWatchTime) / 1000 / 60;
 console.log(`Idle for ${idleMinutes.toFixed(1)} minutes`);
@@ -63,7 +78,12 @@ console.log(`Idle for ${idleMinutes.toFixed(1)} minutes`);
 
 await loginQB();
 let count = await getTorrents();
+
 console.log(`total torrent count is ${count}`)
+
+
+
+
 if (idleMinutes >= 30 && count < 5 ) {
      try {
    await turnTheDeviceOFF();

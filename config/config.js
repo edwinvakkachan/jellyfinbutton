@@ -14,7 +14,10 @@ const config={
  API_KEY :process.env.API_KEY,
  QBITIP :process.env.QBITIP,
  QBITPASS :process.env.QBITPASS,
- QBITUSER :process.env.QBITUSER
+ QBITUSER :process.env.QBITUSER,
+ WEBHOOK_URL_RRROFF :process.env.WEBHOOK_URL_RRROFF,
+ WEBHOOK_URL_RRRON :process.env.WEBHOOK_URL_RRRON
+
 }
 
 export default config;

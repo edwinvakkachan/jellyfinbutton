@@ -53,3 +53,15 @@ export async function turnTheDeviceOFF() {
       action: "turn_off"
     });
 }
+
+export async function turnONRRRaps (){
+     await axios.post(config.WEBHOOK_URL_RRRON, {
+      action: "turn_on"
+    });
+}
+
+export async function turnOffRRRaps (){
+       await axios.post(config.WEBHOOK_URL_RRROFF, {
+      action: "turn_on"
+    });
+}
