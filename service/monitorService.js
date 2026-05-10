@@ -9,6 +9,9 @@ import { getTorrents } from "./torrent.js";
 let lastActiveWatchTime = Date.now();
 let previousPiState = "unknown";
 let rrrAppsState = "unknown"; // "on" | "off"
+const RRR_STABLE_TIME = 5 * 60 * 1000; // 5 minutes
+let pendingRRRState = null;
+let pendingRRRChangedAt = 0;
 
 
 export async function monitorJellyfinUsage() {
@@ -56,29 +59,39 @@ console.log(`the current user count is ${activeWatching.length}`);
 
 
 
-// Turn OFF RRR apps when 2 or more users watching
-if (activeWatching.length >= 2 && rrrAppsState !== "off") {
-  console.log("Turning OFF RRR apps");
+const desiredState = activeWatching.length >= 2 ? "off" : "on";
 
-  try {
-    await turnOffRRRaps();
-    rrrAppsState = "off";
-  } catch (err) {
-    console.error("Failed to turn OFF RRR apps:", err.message);
-  }
+
+// Detect change request
+if (desiredState !== pendingRRRState) {
+  pendingRRRState = desiredState;
+  pendingRRRChangedAt = Date.now();
+
+  console.log(`RRR pending state changed to ${desiredState}`);
 }
 
 
+// Wait until stable for 5 minutes
+const stableFor = Date.now() - pendingRRRChangedAt;
 
-// Turn ON RRR apps when less than 2 users watching
-if (activeWatching.length < 2 && rrrAppsState !== "on") {
-  console.log("Turning ON RRR apps");
-
+if (
+  stableFor >= RRR_STABLE_TIME &&
+  desiredState !== rrrAppsState
+) {
   try {
-    await turnONRRRaps();
-    rrrAppsState = "on";
+
+    if (desiredState === "off") {
+      console.log("Turning OFF RRR apps");
+      await turnOffRRRaps();
+    } else {
+      console.log("Turning ON RRR apps");
+      await turnONRRRaps();
+    }
+
+    rrrAppsState = desiredState;
+
   } catch (err) {
-    console.error("Failed to turn ON RRR apps:", err.message);
+    console.error("RRR webhook failed:", err.message);
   }
 }
 
