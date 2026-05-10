@@ -75,4 +75,3 @@ if (idleMinutes >= 30 && count < 5 ) {
     lastActiveWatchTime = Date.now();
   }
 }
-monitorJellyfinUsage()
