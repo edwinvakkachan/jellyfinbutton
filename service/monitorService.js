@@ -52,12 +52,35 @@ if(sessions.length==0){
 
 console.log(`the current user count is ${activeWatching.length}`);
 
-if(activeWatching.length>=2){
-  console.log('rrr apps turn off');
-await turnOffRRRaps ();
+let rrrAppsState = "unknown"; // "on" | "off"
+
+
+
+// Turn OFF RRR apps when 2 or more users watching
+if (activeWatching.length >= 2 && rrrAppsState !== "off") {
+  console.log("Turning OFF RRR apps");
+
+  try {
+    await turnOffRRRaps();
+    rrrAppsState = "off";
+  } catch (err) {
+    console.error("Failed to turn OFF RRR apps:", err.message);
+  }
 }
 
 
+
+// Turn ON RRR apps when less than 2 users watching
+if (activeWatching.length < 2 && rrrAppsState !== "on") {
+  console.log("Turning ON RRR apps");
+
+  try {
+    await turnONRRRaps();
+    rrrAppsState = "on";
+  } catch (err) {
+    console.error("Failed to turn ON RRR apps:", err.message);
+  }
+}
 
 
   if (activeWatching.length > 0) {
@@ -65,10 +88,6 @@ await turnOffRRRaps ();
     return;
   }
 
-if(activeWatching.length<2){
-    console.log('rrr apps turn ON');
-  await turnONRRRaps();
-}
 
   const idleMinutes = (Date.now() - lastActiveWatchTime) / 1000 / 60;
 console.log(`Idle for ${idleMinutes.toFixed(1)} minutes`);
