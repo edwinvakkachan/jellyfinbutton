@@ -21,6 +21,8 @@ services:
       QBITUSER: ${QBITUSER}
       QBITPASS: ${QBITPASS}
       QBITIP: ${QBITIP}
+      WEBHOOK_URL_RRRON: ${WEBHOOK_URL_RRRON}
+      WEBHOOK_URL_RRROFF: ${WEBHOOK_URL_RRROFF}
 
     dns:
       - 1.1.1.1
