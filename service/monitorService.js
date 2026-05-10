@@ -8,7 +8,7 @@ import { getTorrents } from "./torrent.js";
 
 let lastActiveWatchTime = Date.now();
 let previousPiState = "unknown";
-
+let rrrAppsState = "unknown"; // "on" | "off"
 
 
 export async function monitorJellyfinUsage() {
@@ -52,7 +52,7 @@ if(sessions.length==0){
 
 console.log(`the current user count is ${activeWatching.length}`);
 
-let rrrAppsState = "unknown"; // "on" | "off"
+
 
 
 
