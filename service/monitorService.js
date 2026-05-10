@@ -74,6 +74,8 @@ if (desiredState !== pendingRRRState) {
 // Wait until stable for 5 minutes
 const stableFor = Date.now() - pendingRRRChangedAt;
 
+console.log('stable for', (stableFor / (60 * 1000)).toFixed(1), 'minute');
+
 if (
   stableFor >= RRR_STABLE_TIME &&
   desiredState !== rrrAppsState
