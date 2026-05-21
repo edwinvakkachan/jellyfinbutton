@@ -5,9 +5,17 @@ import {
   turnTheOnDevice
 } from "../service/homeassistant.js";
 
-const COOLDOWN_MS = 180000;
+const COOLDOWN_MS = 8 * 60 * 1000;
 
 let cooldownUntil = 0;
+
+export function startCooldown() {
+  cooldownUntil = Date.now() + COOLDOWN_MS;
+
+  console.log(
+    `Cooldown started for ${COOLDOWN_MS / 60000} minutes`
+  );
+}
 
 function getCooldownState() {
   const remaining = Math.max(
@@ -50,39 +58,51 @@ function formatDuration(ms) {
 }
 
 function getOnDurationText(homeAssistantState) {
-  const changedAt = homeAssistantState.last_changed || homeAssistantState.last_updated;
-  const changedTime = changedAt ? new Date(changedAt).getTime() : NaN;
+  const changedAt =
+    homeAssistantState.last_changed ||
+    homeAssistantState.last_updated;
+
+  const changedTime = changedAt
+    ? new Date(changedAt).getTime()
+    : NaN;
 
   if (!Number.isFinite(changedTime)) {
     return null;
   }
 
-  return `On for ${formatDuration(Date.now() - changedTime)}`;
+  return `On for ${formatDuration(
+    Date.now() - changedTime
+  )}`;
 }
 
 async function getPowerCutState() {
-  const response = await fetchPowerCutHelperStatus().catch((err) => {
-    console.error(err.message);
-    return null;
-  });
+  const response = await fetchPowerCutHelperStatus().catch(
+    (err) => {
+      console.error(err.message);
+      return null;
+    }
+  );
 
   return response?.data?.state || "unknown";
 }
 
 async function getJellyfinHelperState() {
-  const response = await fetchJellyfinHelperStatus().catch((err) => {
-    console.error(err.message);
-    return null;
-  });
+  const response = await fetchJellyfinHelperStatus().catch(
+    (err) => {
+      console.error(err.message);
+      return null;
+    }
+  );
 
   return response?.data?.state || "unknown";
 }
 
 async function getDeviceAndHelperState() {
-  const [deviceResponse, helperState] = await Promise.all([
-    fetchPiStatus(),
-    getJellyfinHelperState()
-  ]);
+  const [deviceResponse, helperState] =
+    await Promise.all([
+      fetchPiStatus(),
+      getJellyfinHelperState()
+    ]);
 
   return {
     homeAssistantState: deviceResponse.data,
@@ -116,7 +136,12 @@ async function buildUiState() {
   }
 
   try {
-    const { homeAssistantState, state, helperState } = await getDeviceAndHelperState();
+    const {
+      homeAssistantState,
+      state,
+      helperState
+    } = await getDeviceAndHelperState();
+
     const baseState = {
       state,
       buttonLabel: "Turn ON Device",
@@ -141,7 +166,9 @@ async function buildUiState() {
           buttonLabel: "Turning OFF",
           buttonDisabled: true,
           isTurningOff: true,
-          uptimeText: getOnDurationText(homeAssistantState),
+          uptimeText: getOnDurationText(
+            homeAssistantState
+          ),
           nextPollMs: 5000
         };
       }
@@ -150,7 +177,9 @@ async function buildUiState() {
         ...baseState,
         statusText: "Device is ON",
         statusKind: "on",
-        uptimeText: getOnDurationText(homeAssistantState),
+        uptimeText: getOnDurationText(
+          homeAssistantState
+        ),
         nextPollMs: 60000
       };
     }
@@ -170,7 +199,9 @@ async function buildUiState() {
       }
 
       if (cooldown.active) {
-        const waitText = `Wait ${formatTime(cooldown.remaining)}`;
+        const waitText = `Wait ${formatTime(
+          cooldown.remaining
+        )}`;
 
         return {
           ...baseState,
@@ -227,7 +258,8 @@ export const turnOnDevice = async (req, res) => {
       });
     }
 
-    const { state, helperState } = await getDeviceAndHelperState();
+    const { state, helperState } =
+      await getDeviceAndHelperState();
 
     if (state === "on" && helperState === "off") {
       return res.status(409).json({
@@ -256,8 +288,6 @@ export const turnOnDevice = async (req, res) => {
     }
 
     await turnTheOnDevice();
-
-    cooldownUntil = now + COOLDOWN_MS;
 
     res.json({
       success: true,

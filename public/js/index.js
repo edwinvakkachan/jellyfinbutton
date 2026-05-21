@@ -1,15 +1,26 @@
 const button = document.querySelector(".btn");
-const buttonLabel = button?.querySelector(".btn__label");
+
+const buttonLabel =
+  button?.querySelector(".btn__label");
+
 const status = document.getElementById("status");
-const statusDot = document.getElementById("status-dot");
+
+const statusDot =
+  document.getElementById("status-dot");
+
 const uptime = document.getElementById("uptime");
+
 const toast = document.getElementById("toast");
 
 let pollTimer = null;
+
 let statusLoading = false;
+
+let previousStatus = null;
 
 function showToast(message) {
   toast.innerText = message;
+
   toast.classList.add("show");
 
   setTimeout(() => {
@@ -20,17 +31,47 @@ function showToast(message) {
 function renderUiState(uiState) {
   if (!uiState) return;
 
+  if (
+    previousStatus &&
+    previousStatus !== uiState.statusText
+  ) {
+    showToast(uiState.statusText);
+  }
+
+  previousStatus = uiState.statusText;
+
   status.innerText = uiState.statusText;
+
   button.disabled = uiState.buttonDisabled;
+
   buttonLabel.innerText = uiState.buttonLabel;
-  document.body.classList.toggle("is-waiting", uiState.isWaiting);
-  document.body.classList.toggle("is-turning-on", uiState.isTurningOn);
-  document.body.classList.toggle("is-turning-off", uiState.isTurningOff);
-  document.body.classList.toggle("is-power-cut", uiState.isPowerCut);
+
+  document.body.classList.toggle(
+    "is-waiting",
+    uiState.isWaiting
+  );
+
+  document.body.classList.toggle(
+    "is-turning-on",
+    uiState.isTurningOn
+  );
+
+  document.body.classList.toggle(
+    "is-turning-off",
+    uiState.isTurningOff
+  );
+
+  document.body.classList.toggle(
+    "is-power-cut",
+    uiState.isPowerCut
+  );
+
   uptime.innerText = uiState.uptimeText || "";
+
   uptime.hidden = !uiState.uptimeText;
 
   statusDot.className = "status-dot";
+
   if (uiState.statusKind === "on") {
     statusDot.classList.add("is-on");
   } else if (uiState.statusKind === "off") {
@@ -44,26 +85,47 @@ function renderUiState(uiState) {
   }
 }
 
-function scheduleStatusRefresh(delayMs = 10000) {
+function scheduleStatusRefresh(
+  delayMs = 10000
+) {
   clearTimeout(pollTimer);
-  pollTimer = setTimeout(getUiState, delayMs);
+
+  pollTimer = setTimeout(
+    getUiState,
+    delayMs
+  );
 }
 
 async function getUiState() {
   if (statusLoading) return;
+
   statusLoading = true;
 
   try {
     const res = await fetch("/api/ui-state");
+
     const uiState = await res.json();
 
     renderUiState(uiState);
-    scheduleStatusRefresh(uiState.nextPollMs);
+
+    scheduleStatusRefresh(
+      uiState.nextPollMs
+    );
   } catch {
-    status.innerText = "Error fetching status";
-    document.body.classList.remove("is-waiting", "is-turning-on", "is-turning-off", "is-power-cut");
+    status.innerText =
+      "Error fetching status";
+
+    document.body.classList.remove(
+      "is-waiting",
+      "is-turning-on",
+      "is-turning-off",
+      "is-power-cut"
+    );
+
     uptime.innerText = "";
+
     uptime.hidden = true;
+
     scheduleStatusRefresh();
   } finally {
     statusLoading = false;
@@ -72,14 +134,25 @@ async function getUiState() {
 
 async function triggerWebhook() {
   try {
-    const res = await fetch("/api/turn-on");
+    const res = await fetch(
+      "/api/turn-on",
+      {
+        method: "POST"
+      }
+    );
+
     const data = await res.json();
 
-    showToast(data.message || "Request failed");
+    showToast(
+      data.message || "Request failed"
+    );
 
     if (data.uiState) {
       renderUiState(data.uiState);
-      scheduleStatusRefresh(data.uiState.nextPollMs);
+
+      scheduleStatusRefresh(
+        data.uiState.nextPollMs
+      );
     }
 
     if (!res.ok && !data.uiState) {
@@ -90,21 +163,47 @@ async function triggerWebhook() {
   }
 }
 
-button?.addEventListener("pointerdown", (event) => {
-  if (button.disabled) return;
+button?.addEventListener(
+  "pointerdown",
+  (event) => {
+    if (button.disabled) return;
 
-  const ripple = document.createElement("span");
-  const rect = button.getBoundingClientRect();
-  const size = Math.max(rect.width, rect.height) * 2;
+    const ripple =
+      document.createElement("span");
 
-  ripple.className = "btn__ripple";
-  ripple.style.width = `${size}px`;
-  ripple.style.height = `${size}px`;
-  ripple.style.left = `${event.clientX - rect.left - size / 2}px`;
-  ripple.style.top = `${event.clientY - rect.top - size / 2}px`;
+    const rect =
+      button.getBoundingClientRect();
 
-  button.appendChild(ripple);
-  ripple.addEventListener("animationend", () => ripple.remove(), { once: true });
-});
+    const size =
+      Math.max(rect.width, rect.height) *
+      2;
+
+    ripple.className = "btn__ripple";
+
+    ripple.style.width = `${size}px`;
+
+    ripple.style.height = `${size}px`;
+
+    ripple.style.left = `${
+      event.clientX -
+      rect.left -
+      size / 2
+    }px`;
+
+    ripple.style.top = `${
+      event.clientY -
+      rect.top -
+      size / 2
+    }px`;
+
+    button.appendChild(ripple);
+
+    ripple.addEventListener(
+      "animationend",
+      () => ripple.remove(),
+      { once: true }
+    );
+  }
+);
 
 getUiState();

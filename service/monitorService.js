@@ -1,10 +1,19 @@
 import axios from "axios";
 import { getJellyfinSessions } from "./jellyfinService.js";
 import config from "../config/config.js";
-import { fetchPiStatus,turnTheDeviceOFF,turnONRRRaps,turnOffRRRaps } from "./homeassistant.js";
-import {logTime} from "../utils/logCurrentDateTime.js"
+import {
+  fetchPiStatus,
+  turnTheDeviceOFF,
+  turnONRRRaps,
+  turnOffRRRaps
+} from "./homeassistant.js";
+
+import { logTime } from "../utils/logCurrentDateTime.js";
+
 import { loginQB } from "./qb.js";
 import { getTorrents } from "./torrent.js";
+
+import { startCooldown } from "../controllers/userController.js";
 
 let lastActiveWatchTime = Date.now();
 let previousPiState = "unknown";
@@ -120,8 +129,11 @@ console.log(`total torrent count is ${count}`)
 
 if (idleMinutes >= 30 && count < 5 ) {
      try {
-   await turnTheDeviceOFF();
-     console.log("Device turned off");
+await turnTheDeviceOFF();
+
+startCooldown();
+
+console.log("Device turned off");
   } catch (error) {
     console.error(error.message);
     console.log("❌ Failed to trigger webhook");
