@@ -463,6 +463,40 @@ body.is-turning-on .status-bar {
   text-align: center;
 }
 
+
+body.is-cooldown .btn {
+  opacity: 0.9;
+  background: radial-gradient(circle at 40% 35%, #5ec8f4, #2276d1 62%, #163f8a);
+  box-shadow:
+    0 0 0 3px rgba(94,200,244,0.28),
+    0 0 34px rgba(94,200,244,0.34),
+    0 12px 32px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.24);
+}
+
+body.is-cooldown .ring {
+  border-color: rgba(94,200,244,0.7);
+  animation: ringCooldown 1.1s ease-in-out infinite;
+}
+
+@keyframes ringCooldown {
+  0%,100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.2;
+    transform: scale(1.1);
+  }
+}
+
+.status-dot.is-cooldown {
+  background: #5ec8f4;
+  box-shadow: 0 0 8px rgba(94,200,244,0.9);
+  animation: dotBlink 1s ease-in-out infinite;
+}
+
 /* ─── Toast ─────────────────────────────────────────────────── */
 .uptime {
   margin-top: -24px;

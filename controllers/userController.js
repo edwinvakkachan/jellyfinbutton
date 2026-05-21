@@ -5,7 +5,7 @@ import {
   turnTheOnDevice
 } from "../service/homeassistant.js";
 
-const COOLDOWN_MS = 180000;
+const COOLDOWN_MS = 8 * 60 * 1000;
 
 let cooldownUntil = 0;
 
@@ -50,8 +50,13 @@ function formatDuration(ms) {
 }
 
 function getOnDurationText(homeAssistantState) {
-  const changedAt = homeAssistantState.last_changed || homeAssistantState.last_updated;
-  const changedTime = changedAt ? new Date(changedAt).getTime() : NaN;
+  const changedAt =
+    homeAssistantState.last_changed ||
+    homeAssistantState.last_updated;
+
+  const changedTime = changedAt
+    ? new Date(changedAt).getTime()
+    : NaN;
 
   if (!Number.isFinite(changedTime)) {
     return null;
@@ -107,6 +112,7 @@ async function buildUiState() {
       isTurningOn: false,
       isTurningOff: false,
       isPowerCut: true,
+      isCooldown: false,
       uptimeText: "Waiting for power to return",
       helperState: "unknown",
       powerCutState,
@@ -116,7 +122,12 @@ async function buildUiState() {
   }
 
   try {
-    const { homeAssistantState, state, helperState } = await getDeviceAndHelperState();
+    const {
+      homeAssistantState,
+      state,
+      helperState
+    } = await getDeviceAndHelperState();
+
     const baseState = {
       state,
       buttonLabel: "Turn ON Device",
@@ -125,6 +136,7 @@ async function buildUiState() {
       isTurningOn: false,
       isTurningOff: false,
       isPowerCut: false,
+      isCooldown: false,
       uptimeText: null,
       helperState,
       powerCutState,
@@ -156,6 +168,17 @@ async function buildUiState() {
     }
 
     if (state === "off") {
+
+      const changedAt =
+        homeAssistantState.last_changed ||
+        homeAssistantState.last_updated;
+
+      const offSince = changedAt
+        ? new Date(changedAt).getTime()
+        : Date.now();
+
+      cooldownUntil = offSince + COOLDOWN_MS;
+
       if (helperState === "on") {
         return {
           ...baseState,
@@ -170,16 +193,20 @@ async function buildUiState() {
       }
 
       if (cooldown.active) {
-        const waitText = `Wait ${formatTime(cooldown.remaining)}`;
+        const waitText =
+          `Available in ${formatTime(cooldown.remaining)}`;
 
         return {
           ...baseState,
           state: "cooldown",
-          statusText: waitText,
-          statusKind: "waiting",
+          statusText: "Device cooling down",
+          statusKind: "cooldown",
           buttonLabel: waitText,
           buttonDisabled: true,
           isWaiting: true,
+          isCooldown: true,
+          cooldownMessage:
+            `Device can turn ON after ${formatTime(cooldown.remaining)}`,
           nextPollMs: 1000
         };
       }
@@ -196,6 +223,7 @@ async function buildUiState() {
       statusText: "Unknown",
       statusKind: "unknown"
     };
+
   } catch (err) {
     console.error(err.message);
 
@@ -209,6 +237,7 @@ async function buildUiState() {
       isTurningOn: false,
       isTurningOff: false,
       isPowerCut: false,
+      isCooldown: false,
       uptimeText: null,
       powerCutState,
       cooldown,
@@ -219,6 +248,7 @@ async function buildUiState() {
 
 export const turnOnDevice = async (req, res) => {
   try {
+
     if (await getPowerCutState() === "on") {
       return res.status(409).json({
         success: false,
@@ -227,7 +257,8 @@ export const turnOnDevice = async (req, res) => {
       });
     }
 
-    const { state, helperState } = await getDeviceAndHelperState();
+    const { state, helperState } =
+      await getDeviceAndHelperState();
 
     if (state === "on" && helperState === "off") {
       return res.status(409).json({
@@ -250,20 +281,19 @@ export const turnOnDevice = async (req, res) => {
     if (now < cooldownUntil) {
       return res.status(429).json({
         success: false,
-        message: "Cooldown active",
+        message: "Device can only turn ON after 8 minutes",
         uiState: await buildUiState()
       });
     }
 
     await turnTheOnDevice();
 
-    cooldownUntil = now + COOLDOWN_MS;
-
     res.json({
       success: true,
       message: "Device turning on",
       uiState: await buildUiState()
     });
+
   } catch (error) {
     console.error(error.message);
 
@@ -281,6 +311,7 @@ export const getStatus = async (req, res) => {
     res.json({
       state: response.data.state
     });
+
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ state: "unknown" });
